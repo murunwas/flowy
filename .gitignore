@@ -12,3 +12,4 @@ index.js.overload
 .vscode/launch.json
 package-lock.json
 /index.js.map
+.env

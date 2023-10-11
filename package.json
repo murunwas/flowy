@@ -7,17 +7,18 @@
     "url": "https://github.com/totaljs/flow"
   },
   "dependencies": {
-    "total4": "latest",
+    "@supercharge/sttp": "^1.4.0",
+    "ccxt": "3.1.60",
+    "chai": "^4.3.10",
     "data-forge": "^1.10.1",
     "data-forge-indicators": "^0.2.7",
     "dayjs": "latest",
     "dotenv": "^16.3.1",
     "ioredis": "^5.3.2",
     "kavajs": "^0.2.0",
+    "simple-statistics": "latest",
     "technicalindicators": "^3.1.0",
-    "@supercharge/sttp": "^1.4.0",
-    "ccxt": "3.1.60",
-    "simple-statistics": "latest"
+    "total4": "^0.0.90"
   },
   "scripts": {
     "start": "node index.js 8000"

@@ -1,5 +1,6 @@
 const { DataFrame, Series } = require("data-forge");
 const ss = require("simple-statistics");
+require("data-forge-indicators");
 
 FUNC.zscore = function (df, period = 5) {
   const zscoreSeries = df
@@ -116,4 +117,61 @@ FUNC.minima = function (df) {
   });
 
   return df.dropSeries("minMax");
+};
+
+FUNC.smaMinima = function (df) {
+  const dataArr = df.toArray();
+  const records = dataArr.reduce(
+    (accumulator, current) => {
+      if (current !== undefined) {
+        const min = Math.min(
+          ...accumulator.itemsFromCurrentIndex
+            .filter((x) => typeof x?.sma9 == "number")
+            .map((x) => x?.sma9),
+        );
+
+        const max = Math.max(
+          ...accumulator.itemsFromCurrentIndex
+            .filter((x) => typeof x?.sma50 == "number")
+            .map((x) => x?.sma50),
+        );
+
+        accumulator.itemsFromCurrentIndex.push(current);
+
+        accumulator.records.push({
+          date: current.date,
+          min,
+          max,
+        });
+      }
+
+      return accumulator;
+    },
+    { itemsFromCurrentIndex: [], records: [] },
+  ).records;
+  const series = new Series({
+    index: records.map((x) => x.date),
+    values: records.map((x) => {
+      const { date, ...rest } = x;
+      return { ...rest };
+    }),
+  });
+  df = df.withSeries("smaMinima", series);
+
+  df = df.generateSeries({
+    smaMin: (c) => c.smaMinima?.min,
+    smaMax: (c) => c.smaMinima?.max,
+  });
+
+  return df.dropSeries("smaMinima");
+};
+
+FUNC.sma = function sma(df, period = 21, key = "close") {
+  const maHigh = df
+    .deflate((bar) => bar[key])
+    .sma(period)
+    .bake();
+
+  df = df.withSeries(`sma${period}`, maHigh).bake();
+  return df;
 };

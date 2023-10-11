@@ -1,0 +1,9 @@
+{
+	"routes": [
+		{
+			"method": "GET",
+			"url": "/",
+			"timeout": 5000
+		}
+	]
+}
