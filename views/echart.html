@@ -1,0 +1,29 @@
+<script charset="utf-8" src="https://d3js.org/d3.v7.min.js"></script>
+<script charset="utf-8" src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+<style>
+/*just a bit of style*/
+#main {
+  width: 80vw;
+  height: 600px;
+  margin: auto;
+  margin-top: 50px;
+}
+
+</style>
+<!--div container for the chart. this in the <body></body>-->
+<form>
+	<input name="name" placeholder="name"/>
+	<input name="timeframe" placeholder="timeframe" value="1h"/>
+	<button>
+	check
+	</button></form>
+<div id="main"></div>
+
+<script>
+    var myChartEchart = echarts.init(document.getElementById("main"), {
+      width: 1000,
+      height: 450
+    });
+
+  myChartEchart.setOption(@{json(model.items)});
+</script>

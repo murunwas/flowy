@@ -1,0 +1,42 @@
+<html>
+  <head>
+   <meta charSet="UTF-8"/> <meta name="viewport" content="width=device-width" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://serversideup.net/wp-content/themes/serversideup/images/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://serversideup.net/wp-content/themes/serversideup/images/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://serversideup.net/wp-content/themes/serversideup/images/favicon/favicon-16x16.png">
+    <meta charset="UTF-8" />
+    <title>Home</title>
+
+<script src="//cdn.componentator.com/spa.min@19.js"></script>
+<link rel="stylesheet" href="//cdn.componentator.com/spa.min@19.css" />
+<style>
+    .all{
+        height:60vh;
+    }
+</style>
+</head>
+<body>
+<ui-component name="LAZY directory"></ui-component>
+<div class="padding">
+<ui-component name="datagrid" path="items" config="margin:22;button:clicked;noborder:1;exec:filtering;pagination:false">
+	<script type="text/plain">
+	@{json(model.header)}
+	</script>
+</ui-component>
+</div>
+<script>
+
+	var items = @{json(model.items)};
+
+	function clicked(btnname, row, button, e) {
+		console.log(btnname, row);
+	}
+
+    function filtering(type, filter, sort, page) {
+		console.log(type, filter, sort, page);
+	}
+
+</script>
+
+</body>
+</html>

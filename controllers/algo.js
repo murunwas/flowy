@@ -1,5 +1,10 @@
 exports.install = function () {
   ROUTE("GET /api/algo/{coin}/{timeframe}", getTopData);
+  ROUTE("GET /api/algo/{coin}/{timeframe}/json", async function () {
+    const { coin, timeframe } = this.params;
+    const data = await FUNC.ddd(coin, timeframe);
+    this.json(data);
+  });
 };
 
 async function getData() {

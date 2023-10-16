@@ -8,8 +8,10 @@
   },
   "dependencies": {
     "@supercharge/sttp": "^1.4.0",
+    "algo-lib": "https://algo-19z.pages.dev/algo-lib-1.0.1.tgz",
     "ccxt": "3.1.60",
     "chai": "^4.3.10",
+    "danfojs-node": "^1.1.2",
     "data-forge": "^1.10.1",
     "data-forge-indicators": "^0.2.7",
     "dayjs": "latest",

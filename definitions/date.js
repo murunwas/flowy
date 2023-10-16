@@ -36,3 +36,8 @@ FUNC.endOf = function (time = "day", date) {
 FUNC.unix = function (unixdate, formatter = "YYYY-MM-DD HH:mm") {
   return dayjs.unix(unixdate).tz(TIMEZONE).format(formatter);
 };
+
+FUNC.subtractMonth = function (noOfmonts = 1, formatter = "YYYY-MM-DD HH:mm") {
+  const date = dayjs().subtract(noOfmonts, "month");
+  return FUNC.getDate(date).tz(TIMEZONE).startOf("month").format(formatter);
+};

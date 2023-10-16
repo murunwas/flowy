@@ -16,6 +16,11 @@ String.prototype.toPercentage = function () {
   return (Number(this) * 100).toFixed(2);
 };
 
+Number.prototype.countDecimals = function () {
+  const decimalString = this.toString().split(".")[1];
+  return decimalString ? decimalString.length : 0;
+};
+
 FUNC.me = () => {
   return "meeeeeeeee";
 };
