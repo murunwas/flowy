@@ -62,6 +62,7 @@ FUNC.getHistoricalOHLCData = async function (
       symbol.toSymbol(),
       timeframe,
       since,
+      1000,
     );
     if (partialOHLCV.length === 0) {
       break;

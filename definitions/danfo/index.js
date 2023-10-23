@@ -65,6 +65,22 @@ class Marker {
       .toArray();
     return markPoints;
   }
+
+  s2Buy() {
+    const markPoints = new DataFrame(dfd.toJSON(this.df))
+      .where((x) => x.s2Buy)
+      .select((x) => {
+        return {
+          name: "B",
+          value: 100,
+          xAxis: x.date,
+          yAxis: x.close,
+          itemStyle: { color: "rgb(92, 123, 217)" },
+        };
+      })
+      .toArray();
+    return markPoints;
+  }
 }
 
 class Data {
@@ -73,8 +89,14 @@ class Data {
     this.df.setIndex({ column: "date", inplace: true });
   }
 
-  addMinima(emaPeriod = 10) {
+  addMinima(emaPeriod = 5) {
     const decimals = this.df["close"].iat(0).countDecimals();
+    let minS2 = null;
+    let minPivot = null;
+    let hasS2TouchMinS2 = false;
+    let hasMoveAboveMin = false;
+    let closeTochMin = false;
+
     const closes = this.df["close"].values.map((val, i) => {
       if (i < emaPeriod)
         return {
@@ -84,19 +106,77 @@ class Data {
           smean: null,
           smin: null,
           smax: null,
+          pivot: null,
+          s1: null,
+          r1: null,
+          s2: null,
+          minS2: null,
+          minPivot: null,
+          s2Buy: false,
         };
-      const ss = this.df["close"].iloc([`${0}:${i}`]);
+      const high = this.df["high"].iat(i);
+      const low = this.df["low"].iat(i);
+      const close = this.df["close"].iat(i);
+
+      const pivot = +((high + close + low) / 3).toFixed(decimals);
+      const r1 = +(2 * pivot - low).toFixed(decimals);
+      const s1 = +(2 * pivot - high).toFixed(decimals);
+      const s2 = +(pivot - (high - low)).toFixed(decimals);
+      minS2 = +(minS2 == null ? s2 : minS2 < s2 ? minS2 : s2).toFixed(decimals);
+      minPivot = +(
+        minPivot == null ? pivot : minPivot < pivot ? minPivot : pivot
+      ).toFixed(decimals);
+
+      const ss = this.df["close"].iloc([`${0}:${i + 1}`]);
       const mean = +ss.mean().toFixed(decimals);
       const min = +ss.min().toFixed(decimals);
       const max = +ss.max().toFixed(decimals);
 
-      const closeDf = this.df["close"].iloc([`${i - emaPeriod}:${i}`]);
+      const closeDf = this.df["close"].iloc([`${i - emaPeriod}:${i + 1}`]);
       //console.log(`${i - emaPeriod}:${i}`);
       const smean = +closeDf.mean().toFixed(decimals);
       const smin = +closeDf.min().toFixed(decimals);
       const smax = +closeDf.max().toFixed(decimals);
 
-      return { min, mean, max, smean, smin, smax };
+      if (s2 == minS2 && hasS2TouchMinS2 == false && close == min) {
+        hasS2TouchMinS2 = true;
+        closeTochMin = true;
+      }
+
+      // if (hasS2TouchMinS2 && close == min) {
+      //   closeTochMin = true;
+      // }
+
+      if (hasS2TouchMinS2 && s2 >= min && closeTochMin) {
+        hasMoveAboveMin = true;
+      }
+
+      const s2Buy =
+        hasS2TouchMinS2 == true &&
+        hasMoveAboveMin == true &&
+        closeTochMin == true;
+
+      if (s2Buy) {
+        hasS2TouchMinS2 = false;
+        hasMoveAboveMin = false;
+        closeTochMin = false;
+      }
+
+      return {
+        min,
+        mean,
+        max,
+        smean,
+        smin,
+        smax,
+        pivot,
+        r1,
+        s1,
+        s2,
+        minS2,
+        minPivot,
+        s2Buy,
+      };
     });
 
     const setColumn = (name) => {
@@ -114,6 +194,13 @@ class Data {
     setColumn("smean");
     setColumn("smin");
     setColumn("smax");
+    setColumn("pivot");
+    setColumn("s1");
+    setColumn("r1");
+    setColumn("s2");
+    setColumn("minS2");
+    setColumn("minPivot");
+    setColumn("s2Buy");
     return this;
   }
 
@@ -137,7 +224,7 @@ class Data {
       format: "row",
     });
 
-    const markPoints = new Marker(this.df).minima();
+    const markPoints = new Marker(this.df).s2Buy();
 
     //console.log(markPoints[0]);
 
@@ -187,22 +274,42 @@ class Data {
       series,
     };
   }
+
+  toJson() {
+    return dfd.toJSON(this.df);
+  }
 }
 
-FUNC.ddd = async function (coin = "sui", timeframe = "1h") {
+FUNC.ddd = async function (coin = "sui", timeframe = "1d", chart = true) {
   const data = await FUNC.getHistoricalOHLCData(
     coin,
     timeframe,
-    FUNC.subtractMonth(),
+    "2023-08-01",
     "month",
   );
 
-  const api = new Data(data).addMinima(3);
+  const api = new Data(data).addMinima(10);
   // const res = df
   //   .filterDataByDate("date", "2023-10-10 10:00", "2023-10-11 14:00")
   //   .loc({ columns: ["date", "close", "mean", "min", "max"] });
   // return dfd.toJSON(api.df.tail(), {
   //   format: "row",
   // });
-  return api.toEchart(["close", "min", "smin", "max", "smax", "mean"]);
+  if (!chart) {
+    return api.toJson();
+  }
+  return api.toEchart([
+    "close",
+    "min",
+    // "smin",
+    //"max",
+    //"smax",
+    //"mean",
+    "pivot",
+    // "s1",
+    // "r1",
+    "s2",
+    "minS2",
+    "minPivot",
+  ]);
 };

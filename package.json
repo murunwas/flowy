@@ -18,6 +18,7 @@
     "dotenv": "^16.3.1",
     "ioredis": "^5.3.2",
     "kavajs": "^0.2.0",
+    "redis": "^4.6.10",
     "simple-statistics": "latest",
     "technicalindicators": "^3.1.0",
     "total4": "^0.0.90"

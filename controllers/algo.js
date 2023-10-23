@@ -5,6 +5,11 @@ exports.install = function () {
     const data = await FUNC.ddd(coin, timeframe);
     this.json(data);
   });
+  ROUTE("GET /api/algo/{coin}/{timeframe}/csv", async function () {
+    const { coin, timeframe } = this.params;
+    const data = await FUNC.ddd(coin, timeframe, false);
+    this.json(data);
+  });
 };
 
 async function getData() {
