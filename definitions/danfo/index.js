@@ -1,6 +1,11 @@
 const dfd = require("danfojs-node");
 const { DataFrame, Series } = require("data-forge");
 
+const calculateBollingerBandGap = (upperBand, lowerBand) => {
+  const gap = ((upperBand - lowerBand) / lowerBand) * 100;
+  return gap;
+};
+
 class Marker {
   constructor(df) {
     this.df = df;
@@ -81,6 +86,23 @@ class Marker {
       .toArray();
     return markPoints;
   }
+
+  gapSize() {
+    //&& x.close <= x.min
+    const markPoints = new DataFrame(dfd.toJSON(this.df))
+      .where((x) => x.closeLowGap >= 5)
+      .select((x) => {
+        return {
+          name: "B",
+          value: 100,
+          xAxis: x.date,
+          yAxis: x.close,
+          itemStyle: { color: "rgb(92, 123, 217)" },
+        };
+      })
+      .toArray();
+    return markPoints;
+  }
 }
 
 class Data {
@@ -98,22 +120,26 @@ class Data {
     let closeTochMin = false;
 
     const closes = this.df["close"].values.map((val, i) => {
-      if (i < emaPeriod)
-        return {
-          min: null,
-          mean: null,
-          max: null,
-          smean: null,
-          smin: null,
-          smax: null,
-          pivot: null,
-          s1: null,
-          r1: null,
-          s2: null,
-          minS2: null,
-          minPivot: null,
-          s2Buy: false,
-        };
+      const obj = {
+        min: null,
+        mean: null,
+        max: null,
+        smean: null,
+        smin: null,
+        smax: null,
+        pivot: null,
+        s1: null,
+        r1: null,
+        s2: null,
+        minS2: null,
+        minPivot: null,
+        s2Buy: false,
+        minGap: null,
+        closeLowGap: null,
+      };
+
+      if (i < emaPeriod) return obj;
+
       const high = this.df["high"].iat(i);
       const low = this.df["low"].iat(i);
       const close = this.df["close"].iat(i);
@@ -157,12 +183,17 @@ class Data {
         closeTochMin == true;
 
       if (s2Buy) {
+        const gap = calculateBollingerBandGap(min, minS2);
+        console.log(gap);
         hasS2TouchMinS2 = false;
         hasMoveAboveMin = false;
         closeTochMin = false;
       }
 
+      obj.closeLowGap = calculateBollingerBandGap(val, low);
+
       return {
+        ...obj,
         min,
         mean,
         max,
@@ -187,20 +218,22 @@ class Data {
       );
     };
 
-    setColumn("mean");
-    setColumn("min");
-    setColumn("max");
-
-    setColumn("smean");
-    setColumn("smin");
-    setColumn("smax");
-    setColumn("pivot");
-    setColumn("s1");
-    setColumn("r1");
-    setColumn("s2");
-    setColumn("minS2");
-    setColumn("minPivot");
-    setColumn("s2Buy");
+    [
+      "mean",
+      "min",
+      "max",
+      "smean",
+      "smin",
+      "smax",
+      "pivot",
+      "s1",
+      "r1",
+      "s2",
+      "minS2",
+      "minPivot",
+      "s2Buy",
+      "closeLowGap",
+    ].forEach((name) => setColumn(name));
     return this;
   }
 
@@ -224,7 +257,7 @@ class Data {
       format: "row",
     });
 
-    const markPoints = new Marker(this.df).s2Buy();
+    const markPoints = new Marker(this.df).gapSize();
 
     //console.log(markPoints[0]);
 
@@ -278,6 +311,13 @@ class Data {
   toJson() {
     return dfd.toJSON(this.df);
   }
+
+  toJson2(columns = ["closeLowGap"]) {
+    const df = this.df.loc({ columns: [...columns] });
+    return dfd.toJSON(df, {
+      format: "row",
+    });
+  }
 }
 
 FUNC.ddd = async function (coin = "sui", timeframe = "1d", chart = true) {
@@ -311,5 +351,18 @@ FUNC.ddd = async function (coin = "sui", timeframe = "1d", chart = true) {
     "s2",
     "minS2",
     "minPivot",
+    "low",
   ]);
+};
+
+FUNC.toJsonw = async function (coin = "sui", timeframe = "1d", chart = true) {
+  const data = await FUNC.getHistoricalOHLCData(
+    coin,
+    timeframe,
+    "2023-08-01",
+    "month",
+  );
+
+  const api = new Data(data).addMinima(10);
+  return api.toJson2();
 };
